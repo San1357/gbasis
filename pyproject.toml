@@ -153,7 +153,8 @@ skip = "*-win32 *-win_amd64 *-manylinux_i686"
 
 [tool.cibuildwheel.linux]
 before-build = "apt-get install -y cmake || true"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel} --no-update-tags || true"
 
 [tool.cibuildwheel.macos]
 before-build = "brew install cmake || true"
-archs = "x86_64 arm64"
+archs = "arm64"
