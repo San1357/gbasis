@@ -96,3 +96,15 @@ install(TARGETS libcint_bindings
 install(FILES $<TARGET_FILE:cint>
     DESTINATION ${SKBUILD_PLATLIB_DIR}/gbasis/integrals/lib
 )
+
+
+install(FILES $<TARGET_FILE:cint>
+    DESTINATION ${SKBUILD_PLATLIB_DIR}/gbasis/integrals/lib
+    RENAME libcint.6.dylib
+)
+
+
+set_target_properties(libcint_bindings PROPERTIES
+    INSTALL_RPATH "@loader_path"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
