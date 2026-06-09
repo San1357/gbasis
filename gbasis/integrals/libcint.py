@@ -217,8 +217,21 @@ class _LibCInt:
     ``libcint`` shared library helper class for generating C function bindings.
 
     """
+#only PR-4" 
+    import platform as _platform
 
-    _libcint: CDLL = cdll.LoadLibrary((Path(__file__).parent / "lib" / "libcint.so"))
+    # Platform-aware loading — .so on Linux, .dylib on Mac, .dll on Windows
+    _lib_dir = Path(__file__).parent / "lib"
+    _system = _platform.system()
+    if _system == "Darwin":
+        _lib_name = "libcint.dylib"
+    elif _system == "Windows":
+        _lib_name = "libcint.dll"
+    else:
+        _lib_name = "libcint.so"
+
+    _libcint: CDLL = cdll.LoadLibrary(str(_lib_dir / _lib_name)) 
+    #PR-4
     r"""
     ``libcint`` shared object library.
 
