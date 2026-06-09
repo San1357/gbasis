@@ -1,8 +1,8 @@
 # CMakeLists.txt — Build C extension for GBasis libcint integration  (Issue: #229)
 
 # Usage:
-#   Default (all platforms):  pip install gbasis
-#   qcint (x86+AVX2 only):   pip install gbasis -C cmake.args="-DUSE_QCINT=ON"
+#   Default (all platforms):  pip install qc-gbasis
+#   qcint (x86+AVX2 only):   pip install qc-gbasis -C cmake.args="-DUSE_QCINT=ON"
 
 
 cmake_minimum_required(VERSION 3.17)
@@ -90,4 +90,9 @@ set(CINT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/cint_install CACHE PATH "" FORC
 # Install only the Python extension into the wheel
 install(TARGETS libcint_bindings
     LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}/gbasis/integrals/lib
+)
+
+
+install(FILES $<TARGET_FILE:cint>
+    DESTINATION ${SKBUILD_PLATLIB_DIR}/gbasis/integrals/lib
 )
