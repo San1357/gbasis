@@ -158,3 +158,4 @@ repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel} --no-update-tags
 [tool.cibuildwheel.macos]
 before-build = "brew install cmake || true"
 archs = "arm64"
+repair-wheel-command = "delocate-wheel -w {dest_dir} -v {wheel} || true"
