@@ -3,6 +3,8 @@ Python C-API bindings for ``libcint`` GTO integrals library.
 
 """
 
+from gbasis.integrals.angular_momentum import angular_momentum_integral as _gbasis_angular_momentum
+
 from contextlib import contextmanager
 
 from ctypes import CDLL, POINTER, Structure, cdll, byref, c_int, c_double, c_void_p
@@ -543,6 +545,8 @@ class CBasis:
                 bas[ibas, 7] = 0
                 # Go to next basis function
                 ibas += 1
+
+        self._basis = basis
 
         # Save coord type
         self.coord_type = coord_type
@@ -1301,8 +1305,8 @@ class CBasis:
             Integral array.
 
         """
-        raise NotImplementedError("Angular momentum integral doesn't work; see Issue #149")
-        # return self._amom(origin=origin, notation=notation, transform=transform)
+        from gbasis.integrals.angular_momentum import angular_momentum_integral as _amom
+        return _amom(self._basis, transform=transform)
 
     def point_charge_integral(
         self, point_coords, point_charges, notation="physicist", transform=None
