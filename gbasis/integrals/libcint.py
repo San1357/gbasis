@@ -158,14 +158,14 @@ so that the index of each (real) element matches its atomic number.
 """
 
 
-INTEGRAL_REGEX = re.compile(r"^(?!.*optimizer$)int[12]e.+")
+INTEGRAL_REGEX = re.compile(r"^(?!.*optimizer$)int[123][ce].+")
 r"""
 Regex for matching ``libcint`` integral functions.
 
 """
 
 
-OPTIMIZER_REGEX = re.compile(r"^(?=.*optimizer$)int[12]e.+")
+OPTIMIZER_REGEX = re.compile(r"^(?=.*optimizer$)int[123][ce].+")
 r"""
 Regex for matching ``libcint`` optimizer functions.
 
@@ -1163,6 +1163,75 @@ class CBasis:
 
         """
         return self._mom(origin=origin, notation=notation, transform=transform)
+    
+    def make_int3c2e(self, func_name, components=tuple(), constant=None, is_complex=False):
+        r"""Make an instance-bound 3-center 2-electron integral method."""
+        func = LIBCINT[func_name + ("_cart" if self.coord_type == "cartesian" else "_sph")]
+        opt_func = LIBCINT[func_name + "_optimizer"]
+
+        n_components = len(components)
+        if n_components == 0:
+            components = (1,)
+            no_comp = True
+        else:
+            no_comp = False
+        prod_comp = np.prod(components, dtype=int)
+        out_shape = (self.nbfn, self.nbfn, self.nbfn) + components
+        buf_shape = prod_comp * self._max_off**3
+
+        def int3c2e(notation="physicist", transform=None):
+            out = np.zeros(out_shape, dtype=c_double, order="F")
+            buf = np.zeros(buf_shape, dtype=c_double)
+            shls = np.zeros(3, dtype=c_int)
+
+            with self.optimizer(opt_func) as opt:
+                ipos = 0
+                for ishl in range(self.nbas):
+                    shls[0] = ishl
+                    p_off = self._offs[ishl]
+                    jpos = 0
+                    for jshl in range(self.nbas):
+                        shls[1] = jshl
+                        q_off = self._offs[jshl]
+                        kpos = 0
+                        for kshl in range(self.nbas):
+                            shls[2] = kshl
+                            r_off = self._offs[kshl]
+                            func(buf, None, shls, self.atm, self.natm,
+                                self.bas, self.nbas, self.env, opt, None)
+                            buf_array = buf[:p_off * q_off * r_off * prod_comp].reshape(
+                                p_off, q_off, r_off, *components, order="F"
+                            )
+                            for p in range(p_off):
+                                for q in range(q_off):
+                                    for r in range(r_off):
+                                        out[p+ipos, q+jpos, r+kpos] = buf_array[p, q, r]
+                            buf[:] = 0
+                            kpos += r_off
+                        jpos += q_off
+                    ipos += p_off
+
+            if no_comp:
+                out = out.squeeze(axis=-1)
+            if constant is not None:
+                out *= constant
+            out = out[self._permutations]
+            out = out[:, self._permutations]
+            out = out[:, :, self._permutations]
+            return out
+
+        return int3c2e
+
+    def three_center_repulsion_integral(self, notation="physicist", transform=None):
+        r"""Compute the 3-center 2-electron repulsion integrals.
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, Nbasis, dtype=float)
+        """
+        return self.make_int3c2e("int3c2e")(notation=notation, transform=transform)
+        
+    
     
     def overlap_gradient_integral(self, notation="physicist", transform=None):
         r"""Compute the overlap gradient integrals (d/dR).
