@@ -1163,6 +1163,51 @@ class CBasis:
 
         """
         return self._mom(origin=origin, notation=notation, transform=transform)
+    
+    def overlap_gradient_integral(self, notation="physicist", transform=None):
+        r"""Compute the overlap gradient integrals (d/dR).
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, 3, dtype=float)
+        """
+        return self._d_ovlp(notation=notation, transform=transform)
+
+    def kinetic_gradient_integral(self, notation="physicist", transform=None):
+        r"""Compute the kinetic energy gradient integrals (d/dR).
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, 3, dtype=float)
+        """
+        return self._d_kin(notation=notation, transform=transform)
+
+    def nuclear_gradient_integral(self, notation="physicist", transform=None):
+        r"""Compute the nuclear attraction gradient integrals (d/dR).
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, 3, dtype=float)
+        """
+        return self._d_nuc(notation=notation, transform=transform)
+
+    def electron_repulsion_gradient_integral(self, notation="physicist", transform=None):
+        r"""Compute the electron repulsion gradient integrals (d/dR).
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, Nbasis, Nbasis, 3, dtype=float)
+        """
+        return self._d_eri(notation=notation, transform=transform)
+
+    def r_inv_gradient_integral(self, origin=None, notation="physicist", transform=None):
+        r"""Compute the 1/r gradient integrals (d/dR).
+
+        Returns
+        -------
+        out : np.ndarray(Nbasis, Nbasis, 3, dtype=float)
+        """
+        return self._d_rinv(inv_origin=origin, notation=notation, transform=transform)
 
     def angular_momentum_integral(self, origin=None, notation="physicist", transform=None):
         r"""
