@@ -1,5 +1,6 @@
 """Test gbasis.integrals.libcint."""
 
+from pathlib import Path
 import pytest
 import os
 import sys
@@ -204,6 +205,7 @@ TEST_INTEGRALS_IODATA = [
 @pytest.mark.parametrize("fname, elements, coord_type", TEST_SYSTEMS_IODATA)
 @pytest.mark.parametrize("transform", TEST_COORD_TRANSFORM)
 @pytest.mark.parametrize("integral", TEST_INTEGRALS_IODATA)
+
 def test_integral_iodata(fname, elements, coord_type, integral, transform):
     pytest.importorskip("iodata")
     from iodata import load_one
@@ -343,3 +345,60 @@ def test_integral_iodata(fname, elements, coord_type, integral, transform):
         raise ValueError("Invalid integral name '{integral}' passed")
 
     npt.assert_allclose(lc_int, py_int, atol=atol, rtol=rtol)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="This test does not work on Windows")
+@pytest.mark.skipif(
+    len(glob(join(dirname(gbasis.__file__), "integrals", "lib", "libcint*"))) == 0,
+    reason="The libcint shared library object was not found",
+)
+@pytest.mark.parametrize("coord_type", TEST_COORD_TYPES)
+@pytest.mark.parametrize("atsyms, atcoords", TEST_SYSTEMS)
+@pytest.mark.parametrize("basis", TEST_BASIS_SETS)
+def test_gradient_integrals(basis, atsyms, atcoords, coord_type):
+    from gbasis.integrals.libcint import ELEMENTS, CBasis
+
+    atcoords = atcoords / 0.5291772083
+    basis_dict = parse_nwchem(find_datafile(basis))
+    py_basis = make_contractions(basis_dict, atsyms, atcoords, coord_types=coord_type)
+    lc_basis = CBasis(py_basis, atsyms, atcoords, coord_type=coord_type)
+
+    ovlp_grad = lc_basis.overlap_gradient_integral()
+    assert ovlp_grad.shape == (lc_basis.nbfn, lc_basis.nbfn, 3)
+
+    kin_grad = lc_basis.kinetic_gradient_integral()
+    assert kin_grad.shape == (lc_basis.nbfn, lc_basis.nbfn, 3)
+
+    nuc_grad = lc_basis.nuclear_gradient_integral()
+    assert nuc_grad.shape == (lc_basis.nbfn, lc_basis.nbfn, 3)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="This test does not work on Windows")
+@pytest.mark.skipif(
+    len(glob(join(dirname(gbasis.__file__), "integrals", "lib", "libcint*"))) == 0,
+    reason="The libcint shared library object was not found",
+)
+@pytest.mark.parametrize("coord_type", TEST_COORD_TYPES)
+@pytest.mark.parametrize("atsyms, atcoords", TEST_SYSTEMS)
+@pytest.mark.parametrize("basis", TEST_BASIS_SETS)
+def test_three_center_integral(basis, atsyms, atcoords, coord_type):
+    from gbasis.integrals.libcint import ELEMENTS, CBasis
+
+    atcoords = atcoords / 0.5291772083
+    basis_dict = parse_nwchem(find_datafile(basis))
+    py_basis = make_contractions(basis_dict, atsyms, atcoords, coord_types=coord_type)
+    lc_basis = CBasis(py_basis, atsyms, atcoords, coord_type=coord_type)
+
+    result = lc_basis.three_center_repulsion_integral()
+    assert result.shape == (lc_basis.nbfn, lc_basis.nbfn, lc_basis.nbfn)
+
+
+
+def test_libcint_build():
+    """Test that libcint shared library is properly built and installed."""
+    from gbasis.integrals.libcint import LIBCINT, CBasis
+    assert LIBCINT is not None
+    lib_path = Path(gbasis.__file__).parent / "integrals" / "lib"
+    libs = list(lib_path.glob("libcint*"))
+    assert len(libs) > 0, "libcint shared library not found"
+    print(f"Found libcint libraries: {[l.name for l in libs]}")
